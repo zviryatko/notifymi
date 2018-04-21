@@ -1,4 +1,4 @@
-package main
+package notifymi
 
 import "crypto/cipher"
 
