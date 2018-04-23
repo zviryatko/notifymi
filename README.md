@@ -1,11 +1,13 @@
-# notifymi
-Mi Band 2 notification from Linux Desktop!
+# NotifyMi
+## Mi Band 2 notification from Linux Desktop!
 
 # TODO
 1. Up connection
 2. Check is device paired from saved state
-2.1 Pair if needed
-2.2 Save state
-3. Do periodic request
-3.1 Get battery status
-3.2 Sent test notification
+3. Pair if needed
+4. Save state
+5. Do periodic request
+6. Get battery status
+7. Sent test notification
+
+(Some protocol details)[Protocol-parse.md]
