@@ -17,6 +17,15 @@
   revision = "e65eb2df9116e5ec6e2409b6142a09a93e96b900"
 
 [[projects]]
+  name = "github.com/docker/docker-credential-helpers"
+  packages = [
+    "credentials",
+    "secretservice"
+  ]
+  revision = "d68f9aeca33f5fd3f08eeae5e9d175edf4e731d1"
+  version = "v0.6.0"
+
+[[projects]]
   name = "github.com/mattn/go-colorable"
   packages = ["."]
   revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
@@ -49,6 +58,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "76cb5ce3224593219b7121a140f249042f820eda4b3613cd5f1080df05fca865"
+  inputs-digest = "119ba0b380e1a26d6e5d68413401d5f7972e5f9cd4a824ec4124c068c7b88e01"
   solver-name = "gps-cdcl"
   solver-version = 1

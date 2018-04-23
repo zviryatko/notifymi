@@ -1,4 +1,4 @@
-package notifymi
+package main
 
 type State struct {
 	paired    bool

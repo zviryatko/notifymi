@@ -1,4 +1,4 @@
-package notifymi
+package main
 
 import (
 	"encoding/hex"
