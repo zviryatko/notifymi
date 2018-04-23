@@ -10,4 +10,4 @@
 6. Get battery status
 7. Sent test notification
 
-(Some protocol details)[Protocol-parse.md]
+[Some protocol details](Protocol-parse.md)
