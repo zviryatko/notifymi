@@ -1,6 +1,8 @@
 List of op-codes and req-res to device with my comments.
 Useful links:
-https://medium.freecodecamp.org/how-i-hacked-xiaomi-miband-2-to-control-it-from-linux-a5bd2f36d3ad
+
+ * https://medium.freecodecamp.org/how-i-hacked-xiaomi-miband-2-to-control-it-from-linux-a5bd2f36d3ad
+ * https://github.com/creotiv/MiBand2/
 
 # OP-codes
 

@@ -13,7 +13,7 @@ type Secret struct {
 	aesecb *ecb
 }
 
-func newSecret(key string) (*Secret, error) {
+func NewSecret(key string) (*Secret, error) {
 	secret := new(Secret)
 	k, err := hex.DecodeString(key)
 	if err != nil {
@@ -39,13 +39,13 @@ func newSecret(key string) (*Secret, error) {
 	return secret, nil
 }
 
-func (secret *Secret) encrypt(value []byte) {
+func (secret *Secret) Encrypt(value []byte) {
 	//return secret.aesecb.Seal(nil, secret.nonce, []byte(value), nil)
 	encrypter := ecbEncrypter(*secret.aesecb)
 	encrypter.CryptBlocks(value, value)
 }
 
-func (secret *Secret) decrypt(value []byte) {
+func (secret *Secret) Decrypt(value []byte) {
 	//return secret.aesgcm.Open(nil, secret.nonce, value, nil)
 	decrypter := ecbDecrypter(*secret.aesecb)
 	decrypter.CryptBlocks(value, value)

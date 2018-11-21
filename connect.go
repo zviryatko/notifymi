@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/bettercap/gatt"
-)
+	)
 
 const HANDLE_AUTH_REQUEST = uint16(0x0055)
 const HANDLE_CONN_CONTROL = uint16(0x0054)
@@ -14,94 +14,99 @@ const RESPONSE_CODE_PAIR = "100101"
 const RESPONSE_CODE_RANDOM = "100201"
 const RESPONSE_CODE_CONNECTED = "100301"
 
-func sendAuthNotification(p gatt.Peripheral) {
+func (p *program) sendRequest(vhandle uint16, b []byte, per gatt.Peripheral) error {
 	c := &gatt.Characteristic{}
-	c.SetVHandle(HANDLE_AUTH_REQUEST)
-	// Pass 0x0100
-	b := []byte{1, 0}
-	if err := p.WriteCharacteristic(c, b, true); err != nil {
-		fmt.Printf("Failed to write characteristic, err: %s\n", err)
-	}
+	c.SetVHandle(vhandle)
+	return per.WriteCharacteristic(c, b, true)
 }
 
-func sendEncryptionKey(p gatt.Peripheral) {
-	c := &gatt.Characteristic{}
-	c.SetVHandle(HANDLE_CONN_CONTROL)
-	// Pass 0x0100
-	b := []byte{1, 0}
-	b = append(b, secret.key...)
-	if err := p.WriteCharacteristic(c, b, true); err != nil {
-		fmt.Printf("Failed to write characteristic, err: %s\n", err)
+func (p *program) sendAuthNotification(per gatt.Peripheral) error {
+	fmt.Println("Sending authorization request...")
+	if err := p.sendRequest(HANDLE_AUTH_REQUEST, []byte{1, 0}, per); err != nil {
+		fmt.Printf("Failed to send auth notification, err: %s\n", err)
+		return err
 	}
+	fmt.Println("Authorization request was sent")
+	return p.sendEncryptionKey(per)
 }
 
-func requestRandomKey(p gatt.Peripheral) {
-	c := &gatt.Characteristic{}
-	c.SetVHandle(HANDLE_CONN_CONTROL)
-	// Pass 0x0200
-	b := []byte{2, 0}
-	if err := p.WriteCharacteristic(c, b, true); err != nil {
-		fmt.Printf("Failed to write characteristic, err: %s\n", err)
+func (p *program) sendEncryptionKey(per gatt.Peripheral) error {
+	message := "Sending encryption key..."
+	if err := p.reRunWhenUnlocked(per, p.state.isPaired, append([]byte{1, 0}, p.secret.key...), 3, 10, message); err != nil {
+		fmt.Printf("Failed to send encryption key, err: %s\n", err)
+		return err
 	}
+	fmt.Println("Encryption key was sent")
+	return p.requestRandomKey(per)
 }
 
-func confirmPairing(p gatt.Peripheral) {
-	c := &gatt.Characteristic{}
-	c.SetVHandle(HANDLE_CONN_CONTROL)
-	// Pass 0x0100
-	b := []byte{3, 0}
-	encryptedNumbers, _ := hex.DecodeString(state.random)
-	secret.encrypt(encryptedNumbers)
-	b = append(b, encryptedNumbers...)
-	if err := p.WriteCharacteristic(c, b, true); err != nil {
-		fmt.Printf("Failed to write characteristic, err: %s\n", err)
+func (p *program) requestRandomKey(per gatt.Peripheral) error {
+	message := "Requesting random key..."
+	if err := p.reRunWhenUnlocked(per, p.state.isRandomNumber, []byte{2, 0}, 3, 10, message); err != nil {
+		fmt.Printf("Failed to send encryption key, err: %s\n", err)
+		return err
 	}
+	fmt.Println("Random key received")
+	return p.confirmPairing(per)
 }
 
-func pairDevice(p gatt.Peripheral) {
+func (p *program) confirmPairing(per gatt.Peripheral) error {
+	encryptedNumbers, err := hex.DecodeString(p.state.RandomString())
+	if err != nil {
+		return err
+	}
+	p.secret.Encrypt(encryptedNumbers)
+	message := "Sending encrypted random key..."
+	if err := p.reRunWhenUnlocked(per, p.state.isConnected, append([]byte{3, 0}, encryptedNumbers...), 3, 10, message); err != nil {
+		fmt.Printf("Failed to send pairing confirmation, err: %s\n", err)
+		return err
+	}
+	fmt.Println("Encrypted random key was sent")
+	return nil
+}
+
+func (p *program) pairPeripheral(per gatt.Peripheral) {
 	// Subscribe to change 0x0054 characteristic.
 	c := &gatt.Characteristic{}
 	c.SetVHandle(HANDLE_CONN_CONTROL)
 	d := &gatt.Descriptor{}
 	d.SetHandle(HANDLE_CONN_CONTROL)
 	c.SetDescriptor(d)
-	p.SetNotifyValue(c, onChangeConnControl)
+	per.SetNotifyValue(c, p.onChangeConnControl)
 
-	sendAuthNotification(p)
-	reRunWhenUnlocked(p, state.isPaired, sendEncryptionKey, 3, 10)
-	reRunWhenUnlocked(p, state.isRandomNumber, requestRandomKey, 3, 10)
-	reRunWhenUnlocked(p, state.isConnected, confirmPairing, 3, 10)
-}
-
-func reRunWhenUnlocked(p gatt.Peripheral, check func() bool, run func(p gatt.Peripheral), attemps int, seconds time.Duration) {
-	i := 1
-	for !check() {
-		go run(p)
-		i++
-		time.Sleep(seconds * time.Second)
-		if i > attemps {
-			return
-		}
+	if err := p.sendAuthNotification(per); err != nil {
+		fmt.Printf("Failed to pair device, err: %s\n", err)
+		p.Stop()
 	}
 }
 
-func onChangeConnControl(c *gatt.Characteristic, data []byte, err error) {
-	switch hex.EncodeToString(data[:3]) {
+func (p *program) reRunWhenUnlocked(per gatt.Peripheral, check func() bool, data []byte, attempts int, seconds time.Duration, message string) (err error) {
+	for i := 1; i < attempts && !check(); i++ {
+		fmt.Println(message)
+		err = p.sendRequest(HANDLE_CONN_CONTROL, data, per)
+		time.Sleep(seconds * time.Second)
+	}
+	return err
+}
+
+func (p *program) onChangeConnControl(c *gatt.Characteristic, data []byte, err error) {
+	code := hex.EncodeToString(data[:3])
+	switch code {
 	case RESPONSE_CODE_PAIR:
 		// Success pairing
-		fmt.Println("Device paired successfully")
-		state.Paired()
+		p.state.Paired()
 		break
 	case RESPONSE_CODE_RANDOM:
 		// Received random key from device, 16 bytes without first 3.
 		randomString := hex.EncodeToString(data[3:19])
-		state.SetRandomString(randomString)
-		fmt.Printf("Received random key: %s\n", randomString)
+		p.state.SetRandomString(randomString)
 		break
 	case RESPONSE_CODE_CONNECTED:
 		// Received random key from device.
-		state.Connected()
-		fmt.Println("Device is connected!!!")
+		p.state.Connected()
 		break
+
+	default:
+		fmt.Printf("Event: %s", code)
 	}
 }

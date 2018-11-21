@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type State struct {
 	paired    bool
 	connected bool
@@ -26,22 +28,27 @@ func (state *State) isConnected() bool {
 }
 
 func (state *State) Paired() {
+	fmt.Println("State changed to: paired")
 	state.paired = true
 }
 
 func (state *State) Unpaired() {
+	fmt.Println("State changed to: unpaired")
 	state.paired = false
 }
 
 func (state *State) Connected() {
+	fmt.Println("State changed to: connected")
 	state.connected = true
 }
 
 func (state *State) Disconnected() {
+	fmt.Println("State changed to: disconnected")
 	state.connected = false
 }
 
 func (state *State) SetRandomString(random string) {
+	fmt.Printf("Received random key: %s\n", random)
 	state.random = random
 }
 

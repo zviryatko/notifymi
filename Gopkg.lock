@@ -26,6 +26,12 @@
   version = "v0.6.0"
 
 [[projects]]
+  name = "github.com/judwhite/go-svc"
+  packages = ["svc"]
+  revision = "63c12402f579f0bdf022653c821a1aa5d7544f01"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/mattn/go-colorable"
   packages = ["."]
   revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
@@ -52,12 +58,16 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "unix",
+    "windows",
+    "windows/svc"
+  ]
   revision = "79b0c6888797020a994db17c8510466c72fe75d9"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "119ba0b380e1a26d6e5d68413401d5f7972e5f9cd4a824ec4124c068c7b88e01"
+  inputs-digest = "c058ce3cffff7cb0e5fb49ace4affe16a61b01be6ef5e4ec1d820ad4d1888cb7"
   solver-name = "gps-cdcl"
   solver-version = 1
